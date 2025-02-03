@@ -1,6 +1,6 @@
 #include <iostream>
-//#include <fstream>
 #include <string>
+#include <vector>
 #include <unistd.h>    // usleep
 #include <fcntl.h>     // File control definitions
 #include <errno.h>     // Error number definitions
@@ -8,6 +8,27 @@
 
 #define SERIAL_PORT "/dev/ttyUSB0"
 #define BAUD_RATE B9600
+
+// Base64 decoding function
+std::string base64_decode(const std::string &in) {
+    std::string out;
+
+    std::vector<int> T(256,-1);
+    const char* b64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    for(int i=0; i<64; i++) T[b64[i]]=i;
+
+    int val=0, valb=-6;
+    for(unsigned char c : in) {
+        if(T[c] == -1) break;
+        val = (val<<6) + T[c];
+        valb += 6;
+        if(valb>=0) {
+            out.push_back(char((val>>valb)&0xFF));
+            valb-=8;
+        }
+    }
+    return out;
+}
 
 int configureSerialPort(int fd) {
     struct termios tty;
@@ -64,9 +85,12 @@ int main() {
             std::string data(buffer, bytesRead);
             std::cout << "Card Data: " << data << std::endl;
             // TODO Process / parse the RFID data here...
+            std::string decodedData = base64_decode(data);
+            int cardNumber = std::stoi(decodedData); // Convert Base64 decoded string to integer
+            std::cout << "Decoded Card Number: " << cardNumber << std::endl;
         } else if (bytesRead < 0) {
-            std::cerr << "Error reading from serial port" << std::endl;
-            break;
+            std::cerr << "Error reading from serial port, retrying..." << std::endl;
+            continue;
         }
         usleep(100); // Sleep for 100 microseconds
     }
