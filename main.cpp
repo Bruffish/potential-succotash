@@ -78,19 +78,30 @@ int main() {
         return 1;
     }
 
-    char buffer[256];
+    char buffer[12]; // Buffer size optimized to handle up to 10 digits of data plus null terminator
     while (true) {
-        ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
+        ssize_t bytesRead = read(fd, buffer, sizeof(buffer) - 1); // Leave space for null terminator
         if (bytesRead > 0) {
-            std::string data(buffer, bytesRead);
+            buffer[bytesRead] = '\0'; // Null-terminate the string
+            std::string data(buffer);
             std::cout << "Card Data: " << data << std::endl;
-            // TODO Process / parse the RFID data here...
             std::string decodedData = base64_decode(data);
             int cardNumber = std::stoi(decodedData); // Convert Base64 decoded string to integer
             std::cout << "Decoded Card Number: " << cardNumber << std::endl;
         } else if (bytesRead < 0) {
             std::cerr << "Error reading from serial port, retrying..." << std::endl;
             continue;
+        } else if (bytesRead == 0) {
+            // No data read, check if the device is still available
+            int flags = fcntl(fd, F_GETFL);
+            if (flags == -1) {
+                std::cerr << "Error getting file status flags: " << errno << std::endl;
+                break;
+            }
+            if ((flags & O_RDWR) != O_RDWR) {
+                std::cerr << "Serial device is not available, exiting..." << std::endl;
+                break;
+            }
         }
         usleep(100); // Sleep for 100 microseconds
     }
