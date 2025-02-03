@@ -39,9 +39,15 @@ std::cout << "Symbolic link created: /dev/ttyUSB0" << std::endl;
     }
 
     // Clean up
-    unlink("/dev/tty/USB0");
-    close(master_fd);
-    close(slave_fd);
+    unlink("/dev/ttyUSB0");
+
+    // Close the pseudo-terminal
+    if (close(master_fd) == -1) {
+        perror("close master_fd");
+    }
+    if (close(slave_fd) == -1) {
+        perror("close slave_fd");
+    }
 
     return 0;
 }
