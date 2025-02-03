@@ -85,9 +85,18 @@ int main() {
             buffer[bytesRead] = '\0'; // Null-terminate the string
             std::string data(buffer);
             std::cout << "Card Data: " << data << std::endl;
-            std::string decodedData = base64_decode(data);
-            int cardNumber = std::stoi(decodedData); // Convert Base64 decoded string to integer
-            std::cout << "Decoded Card Number: " << cardNumber << std::endl;
+std::string decodedData = base64_decode(data);
+std::cout << "Decoded Data: " << decodedData << std::endl; // Debugging statement
+int cardNumber = 0; // Declare cardNumber outside the try block
+try {
+    cardNumber = std::stoi(decodedData); // Convert Base64 decoded string to integer
+    std::cout << "Decoded Card Number: " << cardNumber << std::endl;
+} catch (const std::invalid_argument& e) {
+    std::cerr << "Invalid argument error: " << e.what() << std::endl;
+}
+if (cardNumber != 0) { // Check if cardNumber was successfully set
+    std::cout << "Decoded Card Number: " << cardNumber << std::endl;
+}
         } else if (bytesRead < 0) {
             std::cerr << "Error reading from serial port, retrying..." << std::endl;
             continue;
