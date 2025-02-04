@@ -1,6 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>  // Include for std::all_of
 #include <unistd.h>    // usleep
 #include <fcntl.h>     // File control definitions
 #include <errno.h>     // Error number definitions
@@ -101,18 +102,21 @@ while (true) {
             buffer[bytesRead] = '\0'; // Null-terminate the string
             std::string data(buffer);
             std::cout << "" << data << std::endl;
-            std::string decodedData = base64_decode(data);
-            std::cout << "" << decodedData << std::endl; // Debugging statement
-            int cardNumber = 0; // Declare cardNumber outside the try block
-            try {
-                cardNumber = std::stoi(decodedData); // Convert Base64 decoded string to integer
-                std::cout << "" << cardNumber << std::endl;
-            } catch (const std::invalid_argument& e) {
-                std::cerr << "Invalid argument error: " << e.what() << std::endl;
-            }
-            if (cardNumber != 0) { // Check if cardNumber was successfully set
-                std::cout << "" << cardNumber << std::endl;
-            }
+std::string decodedData = base64_decode(data);
+std::cout << "Received Data: " << data << std::endl; // Debugging statement
+std::cout << "Decoded Data: " << decodedData << std::endl; // Debugging statement
+
+// Check if the decoded data is a valid integer
+if (!decodedData.empty() && std::all_of(decodedData.begin(), decodedData.end(), ::isdigit)) {
+    try {
+        int cardNumber = std::stoi(decodedData); // Convert Base64 decoded string to integer
+        std::cout << "Decoded Card Number: " << cardNumber << std::endl;
+    } catch (const std::invalid_argument& e) {
+        std::cerr << "Invalid argument error: " << e.what() << std::endl;
+    }
+} else {
+    std::cerr << "Decoded data is not a valid integer: " << decodedData << std::endl;
+}
         } else if (bytesRead < 0) {
             std::cerr << "Error reading from serial port, retrying..." << std::endl;
             continue;
