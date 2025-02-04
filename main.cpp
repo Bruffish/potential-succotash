@@ -79,24 +79,40 @@ int main() {
     }
 
     char buffer[12]; // Buffer size optimized to handle up to 10 digits of data plus null terminator
-    while (true) {
+while (true) {
+    fd_set readfds;
+    FD_ZERO(&readfds);
+    FD_SET(fd, &readfds);
+
+    struct timeval timeout;
+    timeout.tv_sec = 1;  // Timeout after 1 second
+    timeout.tv_usec = 0;
+
+    int selectResult = select(fd + 1, &readfds, NULL, NULL, &timeout);
+    if (selectResult == -1) {
+        std::cerr << "Error in select: " << errno << std::endl;
+        break;
+    } else if (selectResult == 0) {
+        // Timeout occurred
+        continue;
+    } else {
         ssize_t bytesRead = read(fd, buffer, sizeof(buffer) - 1); // Leave space for null terminator
         if (bytesRead > 0) {
             buffer[bytesRead] = '\0'; // Null-terminate the string
             std::string data(buffer);
             std::cout << "Card Data: " << data << std::endl;
-std::string decodedData = base64_decode(data);
-std::cout << "Decoded Data: " << decodedData << std::endl; // Debugging statement
-int cardNumber = 0; // Declare cardNumber outside the try block
-try {
-    cardNumber = std::stoi(decodedData); // Convert Base64 decoded string to integer
-    std::cout << "Decoded Card Number: " << cardNumber << std::endl;
-} catch (const std::invalid_argument& e) {
-    std::cerr << "Invalid argument error: " << e.what() << std::endl;
-}
-if (cardNumber != 0) { // Check if cardNumber was successfully set
-    std::cout << "Decoded Card Number: " << cardNumber << std::endl;
-}
+            std::string decodedData = base64_decode(data);
+            std::cout << "Decoded Data: " << decodedData << std::endl; // Debugging statement
+            int cardNumber = 0; // Declare cardNumber outside the try block
+            try {
+                cardNumber = std::stoi(decodedData); // Convert Base64 decoded string to integer
+                std::cout << "Decoded Card Number: " << cardNumber << std::endl;
+            } catch (const std::invalid_argument& e) {
+                std::cerr << "Invalid argument error: " << e.what() << std::endl;
+            }
+            if (cardNumber != 0) { // Check if cardNumber was successfully set
+                std::cout << "Decoded Card Number: " << cardNumber << std::endl;
+            }
         } else if (bytesRead < 0) {
             std::cerr << "Error reading from serial port, retrying..." << std::endl;
             continue;
@@ -112,8 +128,8 @@ if (cardNumber != 0) { // Check if cardNumber was successfully set
                 break;
             }
         }
-        usleep(100); // Sleep for 100 microseconds
     }
+}
 
     close(fd);
     return 0;
