@@ -102,6 +102,11 @@ while (true) {
             buffer[bytesRead] = '\0'; // Null-terminate the string
             std::string data(buffer);
             std::cout << "" << data << std::endl;
+// Test the base64_decode function with a known Base64 string
+std::string testBase64 = "SGVsbG8gV29ybGQh"; // "Hello World!" in Base64
+std::string decodedTest = base64_decode(testBase64);
+std::cout << "Decoded Test Data: " << decodedTest << std::endl; // Debugging statement
+
 std::string decodedData = base64_decode(data);
 std::cout << "Received Data: " << data << std::endl; // Debugging statement
 std::cout << "Decoded Data: " << decodedData << std::endl; // Debugging statement
